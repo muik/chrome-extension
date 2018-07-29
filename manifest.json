@@ -2,7 +2,11 @@
   "name": "Supermart",
   "version": "1.0",
   "description": "Build an Extension!",
-  "permissions": ["activeTab", "declarativeContent", "storage"],
+  "permissions": [
+    "activeTab", "declarativeContent", "storage",
+    "https://*.ticketmonster.co.kr/",
+    "http://*.ticketmonster.co.kr/"
+  ],
   "background": {
     "scripts": ["background.js"],
     "persistent": false
@@ -19,9 +23,15 @@
       "http://search.ticketmonster.co.kr/search?keyword=*"
     ]
   }, {
-    "js": ["jquery-3.3.1.slim.min.js", "cart.js"],
+    "js": ["jquery-3.3.1.slim.min.js", "add_cart.js"],
     "matches": [
       "https://www.ticketmonster.co.kr/deal/*&put_cart=1&*"
+    ]
+  }, {
+    "js": ["jquery-3.3.1.min.js", "cart.js"],
+    "matches": [
+      "https://order.ticketmonster.co.kr/cart",
+      "http://order.ticketmonster.co.kr/cart"
     ]
   }]
 }
