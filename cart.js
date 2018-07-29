@@ -1,5 +1,5 @@
 function parsePage(html, page, orders, itemMap) {
-  var item_ids = null;
+  var itemIds = null;
   var detail = $('<div>' + html + '</div>');
 
   detail.find('tr.package.except').each(function(i) {
@@ -9,18 +9,18 @@ function parsePage(html, page, orders, itemMap) {
       var date = group.find('.dt strong').text();
       var time = group.find('.date_num i').text();
       var id = group.find('.buy_num strong').text();
-      item_ids = [];
+      itemIds = [];
       orders.push({
         id: id,
         datetime: date.replace(/\./g, '-') + ' ' + time.replace(/[\(\)]/g, ''),
-        item_ids: item_ids
+        itemIds: itemIds
       });
     }
 
     var a = tr.find('h4 a');
     var link = a.attr('href').replace(/\?.+/, '');
     var id = link.match(/deal\/(\d+)/)[1];
-    item_ids.push(id);
+    itemIds.push(id);
 
     if (id in itemMap != true) {
       itemMap[id] = {
@@ -98,5 +98,3 @@ function getOrdersCached() {
     }
   });
 }
-
-getOrdersCached().then(console.log);
