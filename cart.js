@@ -4,6 +4,12 @@ function parsePage(html, page, orders, itemMap) {
 
   detail.find('tr.package.except').each(function(i) {
     var tr = $(this);
+
+    // 환불완료는 무시
+    if (tr.children('th.over').first().length > 0) {
+      return true;
+    }
+
     var group = tr.children('th.deal_info').first();
     if (group.length == 1) {
       var date = group.find('.dt strong').text();
@@ -17,17 +23,20 @@ function parsePage(html, page, orders, itemMap) {
       });
     }
 
-    var a = tr.find('h4 a');
-    var link = a.attr('href').replace(/\?.+/, '');
-    var id = link.match(/deal\/(\d+)/)[1];
-    itemIds.push(id);
+    tr.find('.ticket_lst > li').each(function(i) {
+      var li = $(this);
+      var m = li.find('a.pop_link').attr('href').match(/\('\d+','(\d+)','(\d+)/);
+      var id = m[1] + '-' + m[2];
+      var name = li.find('.detail > .tit > strong').text().trim();
+      itemIds.push(id);
 
-    if (id in itemMap != true) {
-      itemMap[id] = {
-        id: id,
-        name: a.text().trim()
-      };
-    }
+      if (id in itemMap != true) {
+        itemMap[id] = {
+          id: id,
+          name: name
+        };
+      }
+    });
   });
 
   var hasNext = detail.find(
@@ -37,8 +46,9 @@ function parsePage(html, page, orders, itemMap) {
 }
 
 function requestPage(page) {
+  // range: 2 - 3개월, 3 - 6개월
   var url = "https://login.ticketmonster.co.kr/user/buyInfo/buyList?type=delivery&page=" + page
-    + "&range=&deliveryStatusType=&ticketStatusType=&mainBuySrl=&conditionType=&_=1532840707088"
+    + "&range=3&_=1532840707088";
   return Promise.resolve($.ajax(url));
 }
 
@@ -81,11 +91,11 @@ function getLocalStorage(key) {
   });
 }
 
-function getOrdersCached() {
+function getOrdersCached(noCache=false) {
   return getLocalStorage('parsedTime').then(function(result) {
     var parsedTime = result['parsedTime'];
 
-    if (typeof parsedTime == 'undefined' || Date.now() - parsedTime > 4 * 60 * 60 * 1000) {
+    if (noCache || typeof parsedTime == 'undefined' || Date.now() - parsedTime > 4 * 60 * 60 * 1000) {
       return getOrders().then(saveOrders);
     } else {
       return getLocalStorage(['orders', 'itemMap']).then(function(result) {

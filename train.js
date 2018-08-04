@@ -35,4 +35,9 @@ function preprocess(data) {
 
 }
 
+function toCsv(data) {
+  console.log(JSON.stringify(data));
+}
+
+//getOrdersCached(true).then(toCsv);
 //getOrdersCached().then(preprocess).then(console.log);
