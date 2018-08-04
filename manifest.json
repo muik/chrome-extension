@@ -25,7 +25,8 @@
   }, {
     "js": ["jquery-3.3.1.slim.min.js", "add_cart.js"],
     "matches": [
-      "https://www.ticketmonster.co.kr/deal/*&put_cart=1&*"
+      "https://www.ticketmonster.co.kr/deal/*&add_cart=1",
+      "http://www.ticketmonster.co.kr/deal/*&add_cart=1"
     ]
   }, {
     "js": [
