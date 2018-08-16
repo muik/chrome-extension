@@ -61,45 +61,23 @@ const outputs = [predictions];
 const model = tf.model({inputs: inputs, outputs: outputs});
 model.compile({optimizer: 'adam', loss: 'meanSquaredError'})
 
-function* dataset(batch_size) {
-  let x1s = [];
-  let x2s = [];
-  let x3s = [];
-  let ys = [];
-  /*
-  const gen = dataset_generator();
-  for (let i=0; i < batch_size; i++) {
-    let item = gen.next();
-    if (item['done']) {
-      break;
-      return;
-    }
+async function train() {
+  console.log('train');
+  var batchIterator = ds.batch(32);
+
+  for (let batch of batchIterator) {
+    let x = batch['inputs'];
+    let y = batch['outputs'];
+    const h = await model.fit(x, y);
+    console.log("Loss after Epoch : " + h.history.loss[0]);
   }
-  */
-  for (let item of dataset_generator()) {
-    var x1 = d.value[0].expandDims();
-    var x2 = d.value[1].expandDims();
-    var x3 = d.value[2];
-    var y = d.value[3];
-    x1s.push(x1);
-    x2s.push(x2);
-    x3s.push(x3);
-    ys.push(y);
-  }
-  x1s = tf.concat(x1s);
-  x2s = tf.concat(x2s);
-  x3s = tf.tensor1d(x3s, 'int32').expandDims(1);
-  ys = tf.tensor1d(ys, 'float32').expandDims(1);
-  return {inputs: [x1s, x2s, x3s], outputs: [ys]}
 }
-//var ds = gen_dataset();
-//var results = model.fit([d1, d2, d3]);
 
-const gen = ds.dataset_generator();
-var d = gen.next();
-var d1 = d.value[0].expandDims();
-var d2 = d.value[1].expandDims();
-var d3 = tf.tensor2d([d.value[2]], [1,1]);
+async function predict() {
+  console.log('predict');
+  var batchIterator = ds.batch();
+  var results = await model.predict(batchIterator.next().value['inputs']);
+  console.log(results.print());
+}
 
-var results = model.predict([d1, d2, d3]);
-console.log(results.print());
+train().then(predict);
