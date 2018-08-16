@@ -2,16 +2,18 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-Array.prototype.shuffle = arr => arr.sort(() => Math.random() - 0.5);
+//Array.prototype.shuffle = arr => arr.sort(() => Math.random() - 0.5);
 Int32Array.prototype.shuffle = function() {
   this.sort(() => Math.random() - 0.5);
   return this;
 };
+Array.prototype.shuffle = Int32Array.prototype.shuffle;
 
 class Dataset {
   constructor(data) {
-    const item_ids = Object.keys(data['itemMap']);
-    const item_index_map = new Map(item_ids.map((id, i) => [id, i]));
+    this.itemMap = data['itemMap'];
+    this.item_ids = Object.keys(this.itemMap);
+    const item_index_map = new Map(this.item_ids.map((id, i) => [id, i]));
     /*
     const item_index_map = item_ids.map((id, i) => [id, i]).reduce(function (o, x) {
       o[x[0]] = x[1];
@@ -27,12 +29,17 @@ class Dataset {
     const items_count_list = this.items_list.map(items => items.length);
 
     this.RECENT_ITEMS_COUNT = Math.max.apply(null, items_count_list);
-    this.TOTAL_ITEMS_COUNT = item_ids.length;
+    this.TOTAL_ITEMS_COUNT = this.item_ids.length;
 
     const times = orders.map(order => Date.parse(order['datetime'] + ' +0900'));
     const msPerDay = 24 * 60 * 60 * 1000;
     const days = times.map(t => (t - times[0]) / msPerDay);
     this.after_days = days.slice(1).map((v, i) => v - days[i]);
+  }
+
+  idxToName(tensor) {
+    return Array.from(tensor.buffer().values.filter(x => x > 0))
+      .map(x => this.item_ids[x-1]).map(id => this.itemMap[id]['name']);
   }
 
   get recentItemsCount() {
@@ -102,51 +109,59 @@ class Dataset {
     }
   }
 
-  *batch(batch_size) {
-    let x1s, x2s, x3s, ys;
-    function init() {
-      x1s = [];
-      x2s = [];
-      x3s = [];
-      ys = [];
-    }
+  *batch(batch_size=32, buffer_size=500, shuffle=true) {
+    const buffer = [];
+
     function flush() {
+      let x1s=[], x2s=[], x3s=[], ys=[];
+      const count = Math.min(batch_size, buffer.length);
+
+      for (let i=0; i < count; i++) {
+        const item = buffer.pop();
+        x1s.push(item[0].expandDims());
+        x2s.push(item[1].expandDims());
+        x3s.push(item[2]);
+        ys.push(item[3]);
+      }
+
       x1s = tf.concat(x1s);
       x2s = tf.concat(x2s);
       x3s = tf.tensor1d(x3s, 'int32').expandDims(1);
       ys = tf.tensor1d(ys, 'float32').expandDims(1);
       return {inputs: [x1s, x2s, x3s], outputs: [ys]}
     }
-    const BUFFER_SIZE = 100;
-    const buffer = [];
-    // TODO buffer and shuffle
 
-    init();
     for (let item of this.dataset_generator()) {
-      var x1 = item[0].expandDims();
-      var x2 = item[1].expandDims();
-      var x3 = item[2];
-      var y = item[3];
-      x1s.push(x1);
-      x2s.push(x2);
-      x3s.push(x3);
-      ys.push(y);
+      buffer.push(item);
 
-      if (ys.length == batch_size) {
-        yield flush();
-        init();
+      if (buffer.length >= buffer_size) {
+        buffer.shuffle();
+        while (buffer.length > 0) {
+          yield flush();
+        }
       }
     }
 
-    if (ys.length > 0) {
+    buffer.shuffle();
+    while (buffer.length > 0) {
       yield flush();
     }
   }
 }
 
 /*
-var batch = new Dataset(data).batch(10);
+let ds = new Dataset(data);
+
+var batch = ds.batch(10, shuffle=false);
+
 for (let d of batch) {
-  console.log(d);
+  const x1 = d['inputs'][0];
+  const x2 = d['inputs'][1];
+  const x3 = d['inputs'][2];
+  console.log(ds.idxToName(x1));
+  console.log(ds.idxToName(x2));
+  console.log(ds.idxToName(x3));
+  console.log(d['outputs'][0].print());
+  break;
 }
-*/
+//*/

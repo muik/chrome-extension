@@ -1,9 +1,8 @@
-emb_dim = 32
-dropout_rate = 0.2
+const emb_dim = 32
+const dropout_rate = 0.2
 
 const ds = new Dataset(data);
 
-const input = tf.input({shape: [5]});
 const input_recent_items = tf.input({shape: [ds.recentItemsCount], name: 'recent_items'});
 const input_current_items = tf.input({shape: [ds.recentItemsCount], name: 'current_items'});
 const input_item = tf.input({shape: [1], name: 'item'});
@@ -63,21 +62,24 @@ model.compile({optimizer: 'adam', loss: 'meanSquaredError'})
 
 async function train() {
   console.log('train');
-  var batchIterator = ds.batch(32);
+  const batchSize = 128;
 
-  for (let batch of batchIterator) {
-    let x = batch['inputs'];
-    let y = batch['outputs'];
-    const h = await model.fit(x, y);
-    console.log("Loss after Epoch : " + h.history.loss[0]);
+  for (let i = 1; i < 10; ++i) {
+    var batchIterator = ds.batch(batchSize);
+    for (let batch of batchIterator) {
+      let x = batch['inputs'];
+      let y = batch['outputs'];
+      const h = await model.fit(x, y, {batchSize: batchSize, epochs: 1});
+      console.log("Loss after Epoch " + i + " : " + h.history.loss[0]);
+    }
   }
 }
 
 async function predict() {
   console.log('predict');
-  var batchIterator = ds.batch();
+  var batchIterator = ds.batch(32);
   var results = await model.predict(batchIterator.next().value['inputs']);
   console.log(results.print());
 }
 
-train().then(predict);
+//train().then(predict);
