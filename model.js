@@ -1,13 +1,15 @@
 emb_dim = 32
 dropout_rate = 0.2
 
+const ds = new Dataset(data);
+
 const input = tf.input({shape: [5]});
-const input_recent_items = tf.input({shape: [RECENT_ITEMS_COUNT], name: 'recent_items'});
-const input_current_items = tf.input({shape: [RECENT_ITEMS_COUNT], name: 'current_items'});
+const input_recent_items = tf.input({shape: [ds.recentItemsCount], name: 'recent_items'});
+const input_current_items = tf.input({shape: [ds.recentItemsCount], name: 'current_items'});
 const input_item = tf.input({shape: [1], name: 'item'});
 
 const embedding = tf.layers.embedding({
-  inputDim: TOTAL_ITEMS_COUNT+1,
+  inputDim: ds.totalItemsCount+1,
   outputDim: emb_dim,
   embeddingsRegularizer: 'l1l2',
   maskZero: true
@@ -93,7 +95,7 @@ function* dataset(batch_size) {
 //var ds = gen_dataset();
 //var results = model.fit([d1, d2, d3]);
 
-const gen = dataset_generator();
+const gen = ds.dataset_generator();
 var d = gen.next();
 var d1 = d.value[0].expandDims();
 var d2 = d.value[1].expandDims();
