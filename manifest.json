@@ -30,7 +30,7 @@
     ]
   }, {
     "js": [
-      "jquery-3.3.1.min.js", "cart.js",
+      "jquery-3.3.1.min.js", "order.js", "cart.js",
       "tf-0.12.4.js", "train.js"
     ],
     "matches": [
