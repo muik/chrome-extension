@@ -70,6 +70,10 @@ class Dataset {
     return ar1.filter(x => !set.has(x));
   }
 
+  allItems() {
+    return tf.range(1, this.TOTAL_ITEMS_COUNT + 1, 1, 'int32');
+  }
+
   *dataset_generator() {
     const items_list = this.items_list;
     const RECENT_ITEMS_COUNT = this.RECENT_ITEMS_COUNT;
