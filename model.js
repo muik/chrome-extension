@@ -65,14 +65,21 @@ Array.prototype.mean = function() {
   return this.reduce((a, b) => a + b) / this.length;
 };
 
+Number.prototype.round = function(ndigits) {
+  const v = 10**ndigits;
+  return parseInt(this * v) / v;
+};
+
 async function train() {
   console.log('train');
   const batchSize = 128;
+  const t1 = Date.now();
 
   for (let i = 1; i < 30; ++i) {
     var batchIterator = ds.batch(batchSize);
     let h;
     const losses = [];
+    const t = Date.now();
     for (let batch of batchIterator) {
       let x = batch['inputs'];
       let y = batch['outputs'];
@@ -80,8 +87,10 @@ async function train() {
       const loss = h.history.loss[0];
       losses.push(loss);
     }
-    console.log("Loss after Epoch " + i + " : " + losses.mean());
+    console.log("Loss after Epoch " + i + " : loss " + losses.mean().round(2) +
+      ', time ' + ((Date.now() - t) / 1000) + 's');
   }
+  console.log("Total time: " + ((Date.now() - t1) / 1000));
 }
 
 async function predict() {
